@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>門禁網頁</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to bottom, #f0f8ff, #e6f7ff);
+      color: #333;
+      text-align: center;
+    }
+    header {
+      background: #0077b6;
+      color: white;
+      padding: 1rem 0;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    nav {
+      background: #48cae4;
+      display: flex;
+      justify-content: center;
+      padding: 0.5rem 0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    nav button {
+      background: #0077b6;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin: 0 0.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+    }
+    nav button:hover {
+      background: #023e8a;
+      transform: scale(1.05);
+    }
+    nav button.active {
+      background: #03045e;
+    }
+    .content {
+      display: none;
+      padding: 2rem;
+      margin: 1rem;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .hidden { display: none; }
+    .content:not(.hidden) { display: block; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>門禁網頁</h1>
+  </header>
+  <nav>
+    <button id="home-btn" class="active" onclick="showPage('home')">首頁</button>
+    <button id="features-btn" onclick="showPage('features')">刷卡顯示</button>
+    <button id="about-btn" onclick="showPage('about')">介紹作品</button>
+    <button id="security-btn" onclick="window.open('訪客登記.html', '_blank')">訪客登記</button>
+    <button id="register-btn" onclick="window.open('註冊.html', '_blank')">註冊帳號</button>
+    <button id="query-btn" onclick="window.open('查詢.html', '_blank')">查詢紀錄</button> </nav>
+    <!--<button id="login-btn" onclick="window.open('登入頁面.html', '_blank')">登入頁面</button> </nav>-->
+
+  <div id="home" class="content">
+    <h2>歡迎使用門禁系統</h2>
+    <p>此系統結合了硬體與網頁，提供門禁管理與記錄功能。</p>
+  </div>
+
+  <div id="features" class="content hidden">
+    <h2>刷卡機管理</h2>
+    <h3>最後刷卡 UID</h3>
+    <p><strong id="last-uid">未讀取</strong></p>
+    </div>
+
+  <div id="about" class="content hidden">
+    <h2>作品介紹</h2>
+    <p>這是一個基於 ESP32 的一些配件如rfid 跟一塊小塊螢幕大概0.94寸
+      那塊小螢幕主要是用來看卡片裡面uid門禁系統，結合硬體與網頁。</p>
+  </div>
+
+  <script>
+    const API_BASE_URL = "http://localhost:3000"; //  server.js 運行在 3000 端口
+    let intervalId; // 用於儲存 setInterval 的 ID
+
+    function showPage(page) {
+      const pages = ['home', 'features', 'about'];
+      pages.forEach(p => {
+        const element = document.getElementById(p);
+        if (element) element.classList.add('hidden');
+        const btn = document.getElementById(`${p}-btn`);
+        if (btn) btn.classList.remove('active');
+      });
+      const selectedPage = document.getElementById(page);
+      if (selectedPage) selectedPage.classList.remove('hidden');
+      const selectedBtn = document.getElementById(`${page}-btn`);
+      if (selectedBtn) selectedBtn.classList.add('active');
+
+      // 清除之前的自動更新，避免重複啟動
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+
+      if (page === 'features') {
+        updateLastUID(); // 當選擇「刷卡顯示」時調用更新 UID
+        intervalId = setInterval(updateLastUID, 2000); // 每 2 秒自動更新
+      }
+    }
+
+    async function updateLastUID() {
+      try {
+        document.getElementById('last-uid').innerText = '讀取中...'; // 讀取中的提示
+        const response = await fetch(`${API_BASE_URL}/get-last-uid`);
+        if (response.ok) {
+          const data = await response.json();
+          document.getElementById('last-uid').innerText = data.uid || '無記錄';
+        } else {
+          const errorData = await response.json();
+          document.getElementById('last-uid').innerText = errorData.uid || '無法讀取 UID'; // 顯示伺服器錯誤訊息
+          // 如果伺服器回應錯誤，可以考慮停止自動更新
+          clearInterval(intervalId);
+          intervalId = null;
+          console.error("Server responded with an error:", errorData.error);
+        }
+      } catch (error) {
+        console.error('Error fetching last UID:', error);
+        document.getElementById('last-uid').innerText = '無法連接伺服器或發生錯誤';
+        // 如果無法連接，停止自動更新
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      showPage('home'); // 預設顯示首頁
+    });
+  </script>
+</body>
+</html>
