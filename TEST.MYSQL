@@ -1,0 +1,11 @@
+CREATE TABLE users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+INSERT INTO users (username, password) VALUES ('TEST1', '123');
+INSERT INTO users (username, password) VALUES ('TEST', '123');
+INSERT INTO users (username, password) VALUES ('TEST2', '123');
+SELECT * FROM users;
+DELETE FROM users WHERE users (username, password) VALUES ('TEST1', '123') ;
