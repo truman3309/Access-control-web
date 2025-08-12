@@ -21,3 +21,17 @@ INSERT INTO user_CORD (CORD_NUMBER) VALUES ('TEST1');
 DELETE FROM user_CORD (CORD_NUMBER) VALUES ('TEST1');
 
 SELECT * FROM user_CORD
+#網頁查詢
+CREATE TABLE AccessRecords (
+    RecordID INT AUTO_INCREMENT PRIMARY KEY,      -- 紀錄唯一ID，自動遞增
+    VisitorName VARCHAR(100) NULL,                 -- 姓名，允許NULL（未登記訪客）
+    UID VARCHAR(50) NOT NULL,                      -- 卡片UID，必填
+    AccessTime DATETIME NOT NULL,                   -- 進出時間，必填
+    AccessType VARCHAR(50) NOT NULL DEFAULT '刷卡',  -- 類型，預設為刷卡
+    Status VARCHAR(50) NOT NULL DEFAULT '正常'         -- 狀態，預設正常
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO AccessRecords (VisitorName, UID, AccessTime, AccessType, Status)
+VALUES ('王小明', 'A123456789', NOW(), '刷卡', '正常');
+
+SELECT * FROM AccessRecords
