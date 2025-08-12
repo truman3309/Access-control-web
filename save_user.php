@@ -1,48 +1,52 @@
 <?php
-// ==== 資料庫連線設定 ====
-$servername = "localhost";   // 資料庫主機
-$username_db = "root";       // 資料庫帳號
-$password_db = "";           // 資料庫密碼
-$dbname = "test_db";         // 資料庫名稱
+header('Content-Type: application/json; charset=UTF-8');
 
-// 建立連線
+// 資料庫連線設定
+$servername = "localhost";
+$username_db = "root";
+$password_db = "";
+$dbname = "test_db";
+
 $conn = new mysqli($servername, $username_db, $password_db, $dbname);
 if ($conn->connect_error) {
-    die(json_encode(["status" => "error", "message" => "連線失敗"]));
+    echo json_encode(["status" => "error", "message" => "資料庫連線失敗"]);
+    exit;
 }
 
-/**
- * 儲存使用者帳號密碼到資料庫
- */
 function saveUser($conn, $username, $password) {
-    // 密碼加密
-    $pass_hashed = password_hash($password, PASSWORD_DEFAULT);
+    // 先檢查帳號是否已存在
+    $check = $conn->prepare("SELECT id FROM users WHERE username = ?");
+    $check->bind_param("s", $username);
+    $check->execute();
+    $check->store_result();
 
-    // SQL 插入語法
-    $sql = "INSERT INTO users (username, password) VALUES (?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ss", $username, $pass_hashed);
-
-    if ($stmt->execute()) {
-        $result = ["status" => "success", "message" => "帳號建立成功！"];
-    } else {
-        $result = ["status" => "error", "message" => $stmt->error];
+    if ($check->num_rows > 0) {
+        return ["status" => "error", "message" => "帳號已存在"];
     }
 
-    $stmt->close();
-    return $result;
+    // 加密密碼
+    $hashed = password_hash($password, PASSWORD_DEFAULT);
+
+    // 寫入資料庫
+    $stmt = $conn->prepare("INSERT INTO users (username, password) VALUES (?, ?)");
+    $stmt->bind_param("ss", $username, $hashed);
+    if ($stmt->execute()) {
+        return ["status" => "success", "message" => "註冊成功！"];
+    } else {
+        return ["status" => "error", "message" => "註冊失敗：" . $stmt->error];
+    }
 }
 
-// 接收資料
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $user = $_POST['username'] ?? '';
-    $pass = $_POST['password'] ?? '';
+    $username = trim($_POST["username"] ?? '');
+    $password = trim($_POST["password"] ?? '');
 
-    if ($user && $pass) {
-        echo json_encode(saveUser($conn, $user, $pass), JSON_UNESCAPED_UNICODE);
-    } else {
-        echo json_encode(["status" => "error", "message" => "缺少帳號或密碼"], JSON_UNESCAPED_UNICODE);
+    if (!$username || !$password) {
+        echo json_encode(["status" => "error", "message" => "請輸入帳號與密碼"]);
+        exit;
     }
+
+    echo json_encode(saveUser($conn, $username, $password));
 }
 
 $conn->close();
