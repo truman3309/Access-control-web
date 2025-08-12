@@ -1,3 +1,4 @@
+#註冊使用者
 CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(50) NOT NULL,
