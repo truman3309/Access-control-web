@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>進出紀錄與異常報告</title>
+    <link rel="stylesheet" href="保全.css"> <style>
+        /* 這裡可以放一些 查詢.html 特有的樣式，或者調整保全.css 的通用樣式 */
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+        }
+        .section h3 {
+            color: #0056b3;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: calc(100% - 120px); /* Adjust width as needed */
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        #reportContainer {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #fff3cd; /* Light yellow for reports */
+            border: 1px solid #ffeeba;
+            border-radius: 5px;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>安全管理系統</h1>
+        </header>
+        
+        <div class="section">
+            <h3>進出紀錄查詢</h3>
+            <input type="text" id="searchQuery" placeholder="輸入姓名或卡片UID">
+            <button onclick="searchRecords()">查詢</button>
+            <table>
+                <thead>
+                    <tr>
+                        <th>姓名</th>
+                        <th>卡片UID</th>
+                        <th>進出時間</th>
+                        <th>類型</th>
+                        <th>狀態</th>
+                    </tr>
+                </thead>
+                <tbody id="recordsTable">
+                    </tbody>
+            </table>
+        </div>
+        <div class="section">
+            <h3>異常事件報告</h3>
+            <button onclick="generateReport()">異常查詢</button>
+            <div id="reportContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = "http://localhost:3000"; // 假設您的 server.js 運行在 3000 端口
+        let allAccessRecords = []; // 用於儲存從伺服器獲取的所有記錄
+
+        async function fetchAndDisplayRecords() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/access-records`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const records = await response.json();
+                allAccessRecords = records; // 儲存所有獲取的記錄
+                displayRecords(records); // 顯示所有記錄
+            } catch (error) {
+                console.error('Error fetching access records:', error);
+                const tableBody = document.getElementById("recordsTable");
+                tableBody.innerHTML = `<tr><td colspan="5">無法載入記錄：${error.message}</td></tr>`;
+            }
+        }
+
+        function displayRecords(recordsToDisplay) {
+            const tableBody = document.getElementById("recordsTable");
+            tableBody.innerHTML = ""; // 清除現有記錄
+
+            if (recordsToDisplay.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5">沒有找到符合條件的記錄</td></tr>`;
+                return;
+            }
+
+            recordsToDisplay.forEach(record => {
+                // 根據 server.js /access-records 返回的數據結構調整
+                let name = record.visitor_name || '未登記訪客'; // 如果有訪客姓名則顯示，否則顯示預設
+                let status = record.status || '正常'; // 預設狀態
+                let type = record.type || '刷卡'; // 預設類型
+
+                let row = `<tr>
+                               <td>${name}</td>
+                               <td>${record.uid}</td>
+                               <td>${record.time}</td>
+                               <td>${type}</td>
+                               <td>${status}</td>
+                           </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        function searchRecords() {
+            const query = document.getElementById("searchQuery").value.toLowerCase();
+            const filteredRecords = allAccessRecords.filter(record => 
+                (record.visitor_name && record.visitor_name.toLowerCase().includes(query)) || 
+                record.uid.toLowerCase().includes(query)
+            );
+            displayRecords(filteredRecords);
+        }
+
+        function generateReport() {
+            let reportHTML = "<h4>異常事件列表</h4><ul>";
+            let abnormalFound = false;
+            allAccessRecords.forEach(record => {
+                // 這裡的「異常」邏輯需要根據您的實際業務定義
+                // 假設所有狀態不是「正常」的都是異常
+                if (record.status && record.status !== "正常") { 
+                    reportHTML += `<li>${record.visitor_name || record.uid} (UID: ${record.uid}) - ${record.time} - 狀態: ${record.status}</li>`;
+                    abnormalFound = true;
+                }
+            });
+            reportHTML += "</ul>";
+
+            const reportContainer = document.getElementById("reportContainer");
+            if (!abnormalFound) {
+                reportContainer.innerHTML = "<p>目前沒有異常事件報告。</p>";
+            } else {
+                reportContainer.innerHTML = reportHTML;
+            }
+        }
+
+        // 頁面載入時初始載入所有記錄
+        document.addEventListener("DOMContentLoaded", fetchAndDisplayRecords);
+    </script>
+</body>
+</html>
