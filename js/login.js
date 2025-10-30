@@ -19,6 +19,7 @@ function handleLogin(event) {
     msg.classList.add("success");
     setTimeout(() => {
       window.location.href = "../html/主頁.html"; // 成功後導向首頁
+      msg.textContent = "用戶名稱:測試帳號，成功登入";
     }, 1000);
   } else {
     msg.textContent = "帳號或密碼錯誤，請重新輸入。";
