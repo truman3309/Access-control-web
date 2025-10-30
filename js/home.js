@@ -29,7 +29,7 @@ async function fetchUID() {
 
     // 模擬 API 回傳
     await new Promise(r => setTimeout(r, 1000));
-    const data = { uid: "暫無資訊" };
+    const data = { uid: "test_uid" };
 
     uidEl.textContent = data.uid;
     statusEl.textContent = "資料同步成功";
