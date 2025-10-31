@@ -6,12 +6,13 @@
   <title>登入系統 | Access Control</title>
   <link rel="stylesheet" href="../css/登入.css" />
   <script defer src="../js/login.js"></script>
-
 </head>
 
 <body>
   <div class="login-container">
     <h2>門禁登入</h2>
+
+    <!-- 登入表單 -->
     <form id="loginForm" onsubmit="return handleLogin(event)">
       <div class="form-group">
         <label for="username">使用者名稱</label>
@@ -26,6 +27,12 @@
       <button type="submit">登入</button>
       <div id="loginMessage" class="message"></div>
     </form>
+
+    <!-- 註冊提示區塊 -->
+    <div class="register-link">
+      <p>還沒有帳號嗎？</p>
+      <button onclick="window.location.href='../html/註冊.html'">前往註冊</button>
+    </div>
   </div>
 </body>
 </html>
