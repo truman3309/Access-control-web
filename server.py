@@ -4,7 +4,7 @@
 import http.server
 import socketserver
 
-PORT = 8080  # 可以改成 8000、5000 之類的
+PORT = 1100  # 可以改成 8000、5000 之類的
 
 # 建立 HTTP Handler
 Handler = http.server.SimpleHTTPRequestHandler
