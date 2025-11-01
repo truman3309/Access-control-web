@@ -8,7 +8,11 @@ const mysql = require("mysql2");
 const connection = mysql.createConnection({
     host: 'localhost',      // 資料庫主機
     user: 'root',           // 使用者名稱
+<<<<<<< HEAD
     password: '!QAZ2wsx', // 資料庫密碼
+=======
+    password: '******', // 資料庫密碼
+>>>>>>> 64366e82262a0c95c793af42d530187d547bff03
     database: 'my_database',      // 資料庫名稱
     charset: 'utf8mb4'      // 使用 UTF-8 MB4 字元集（支援 emoji）
 });
@@ -34,9 +38,16 @@ connection.execute('SELECT * FROM postinfo', (error, results) => {
 // 範例 2：新增一筆測試資料
 const post = {
     id: 1,
+<<<<<<< HEAD
     uid: 'test',
     name: '王小明',
     datetime: '2025-10-31'
+=======
+    title: '測試標題',
+    content: '這是一篇測試文章',
+    author: '王小明',
+    post_date: '2025-10-31'
+>>>>>>> 64366e82262a0c95c793af42d530187d547bff03
 };
 
 connection.execute(
