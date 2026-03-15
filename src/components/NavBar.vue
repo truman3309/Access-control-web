@@ -18,7 +18,7 @@
             {{ auth.userName }}
           </span>
           <!-- 未登入 -->
-          <router-link v-else to="/LoginView.vue" class="login-link">登入</router-link>
+          <router-link v-else to="/Login" class="login-link">登入</router-link>
         </li>
       </ul>
     </nav>
