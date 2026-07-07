@@ -2,73 +2,77 @@
   <NavBar />
 
   <main class="container fade-in">
+    <p class="eyebrow">Search Archive</p>
     <h2>進出紀錄查詢</h2>
 
-    <div class="search-bar">
+    <div class="search-bar panel">
       <input
         v-model="searchQuery"
         type="text"
-        placeholder="輸入姓名或卡片 UID..."
+        placeholder="輸入姓名或卡片 UID…"
         @keyup.enter="searchRecords"
       />
-      <button @click="searchRecords">查詢</button>
+      <button class="btn btn-primary" @click="searchRecords">查詢</button>
     </div>
 
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>姓名</th>
-            <th>卡片 UID</th>
-            <th>時間</th>
-            <th>類型</th>
-            <th>狀態</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="loadingRecords">
-            <td colspan="5" class="loading">資料載入中...</td>
-          </tr>
-          <tr v-else-if="filteredRecords.length === 0">
-            <td colspan="5" class="loading">查無紀錄</td>
-          </tr>
-          <tr
-            v-for="(r, i) in filteredRecords"
-            :key="i"
-            :class="r.status && r.status !== '正常' ? 'row-abnormal' : ''"
-          >
-            <td>{{ r.visitor_name || '未登記訪客' }}</td>
-            <td>{{ r.uid }}</td>
-            <td>{{ r.time }}</td>
-            <td>{{ r.type || '刷卡' }}</td>
-            <td>
-              <span :class="r.status && r.status !== '正常' ? 'badge-abnormal' : 'badge-normal'">
-                {{ r.status || '正常' }}
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="panel table-panel">
+      <div class="table-scroll">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>姓名</th>
+              <th>卡片 UID</th>
+              <th>時間</th>
+              <th>類型</th>
+              <th>狀態</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="loadingRecords">
+              <td colspan="5" class="empty-row">資料載入中…</td>
+            </tr>
+            <tr v-else-if="filteredRecords.length === 0">
+              <td colspan="5" class="empty-row">查無符合的紀錄，換個關鍵字再試試。</td>
+            </tr>
+            <tr
+              v-for="(r, i) in filteredRecords"
+              :key="i"
+              :class="r.status && r.status !== '正常' ? 'row-deny' : 'row-pass'"
+            >
+              <td>{{ r.visitor_name || '未登記訪客' }}</td>
+              <td>{{ r.uid }}</td>
+              <td>{{ r.time }}</td>
+              <td>{{ r.type || '刷卡' }}</td>
+              <td>
+                <span :class="r.status && r.status !== '正常' ? 'tag deny' : 'tag pass'">
+                  {{ r.status || '正常' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- 異常報告 -->
-    <div class="report-section">
+    <section class="report-section">
+      <p class="eyebrow">Exceptions</p>
       <h3>異常事件報告</h3>
-      <button class="btn-report" @click="generateReport">生成報告</button>
+      <button class="btn btn-ghost report-btn" @click="generateReport">生成報告</button>
 
-      <div v-if="reportItems.length > 0" class="report-box">
+      <div v-if="reportItems.length > 0" class="panel report-box">
         <ul>
           <li v-for="(r, i) in reportItems" :key="i">
             <strong>{{ r.visitor_name || r.uid }}</strong>
-            （UID: {{ r.uid }}）於 {{ r.time }} 狀態：
-            <span class="status-abnormal">{{ r.status }}</span>
+            （UID: {{ r.uid }}）於 {{ r.time }}，狀態：
+            <span class="report-status">{{ r.status }}</span>
           </li>
         </ul>
       </div>
-      <div v-else-if="reportGenerated" class="report-box">
-        <p>目前沒有異常事件報告。</p>
+      <div v-else-if="reportGenerated" class="panel report-box">
+        <p class="empty-note">目前沒有異常事件，通行紀錄一切正常。</p>
       </div>
-    </div>
+    </section>
   </main>
 
   <footer>
@@ -80,7 +84,6 @@
 import { ref, computed, onMounted } from 'vue'
 import NavBar from '../components/NavBar.vue'
 
-const API_BASE_URL = 'http://localhost:3000'
 const allRecords = ref([])
 const searchQuery = ref('')
 const loadingRecords = ref(true)
@@ -99,7 +102,7 @@ const filteredRecords = computed(() => {
 async function fetchRecords() {
   loadingRecords.value = true
   try {
-    const res = await fetch(`${API_BASE_URL}/access-records`)
+    const res = await fetch('/api/access-records')
     const data = await res.json()
     allRecords.value = data
   } catch {
@@ -123,157 +126,64 @@ onMounted(fetchRecords)
 <style scoped>
 .container {
   max-width: 960px;
-  margin: 40px auto;
-  padding: 0 20px;
+  margin: 44px auto;
+  padding: 0 20px 20px;
 }
 
-h2 {
-  font-size: 1.6rem;
-  color: #0056b3;
-  margin-bottom: 20px;
-}
+h2 { font-size: 1.7rem; margin: 8px 0 22px; }
 
 .search-bar {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
+  padding: 10px;
+  margin-bottom: 22px;
 }
 
 .search-bar input {
   flex: 1;
-  padding: 10px 14px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  padding: 11px 14px;
+  border: 1px solid var(--panel-edge);
+  border-radius: 7px;
   font-size: 1rem;
-  transition: border-color 0.3s;
+  font-family: var(--font-body);
+  background: var(--ink-2);
+  color: #dcd6c8;
+  transition: border-color 0.2s ease;
 }
-
+.search-bar input::placeholder { color: var(--mist-2); }
 .search-bar input:focus {
-  border-color: #007bff;
   outline: none;
-  box-shadow: 0 0 4px rgba(0,123,255,0.2);
+  border-color: var(--brass);
 }
 
-.search-bar button {
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.3s;
-}
+.table-panel { padding: 8px 0 4px; margin-bottom: 34px; }
+.table-scroll { overflow-x: auto; }
+.table-panel .log-table { min-width: 600px; }
 
-.search-bar button:hover {
-  background-color: #0056b3;
-}
-
-.table-container {
-  overflow-x: auto;
-  margin-bottom: 30px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #fff;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-}
-
-th {
-  background-color: #0056b3;
-  color: #fff;
-  padding: 12px 16px;
-  text-align: left;
-}
-
-td {
-  padding: 11px 16px;
-  border-bottom: 1px solid #eee;
-  color: #333;
-}
-
-.loading {
+.empty-row {
   text-align: center;
-  color: #999;
-  padding: 20px;
+  color: var(--mist-2);
+  padding: 26px 16px;
 }
 
-.row-abnormal td {
-  background-color: #fff5f5;
-}
+.report-section h3 { margin: 6px 0 14px; font-size: 1.2rem; }
 
-.badge-normal {
-  background-color: #28a745;
-  color: white;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 0.82rem;
-  font-weight: 600;
-}
+.report-btn { margin-bottom: 16px; }
 
-.badge-abnormal {
-  background-color: #dc3545;
-  color: white;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 0.82rem;
-  font-weight: 600;
-}
+.report-box { padding: 18px 22px; }
 
-.report-section {
-  margin-top: 10px;
-}
-
-.report-section h3 {
-  color: #333;
-  margin-bottom: 12px;
-}
-
-.btn-report {
-  padding: 10px 22px;
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.3s;
-  margin-bottom: 14px;
-}
-
-.btn-report:hover {
-  background-color: #5a6268;
-}
-
-.report-box {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  padding: 16px 20px;
-}
-
-.report-box ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
+.report-box ul { list-style: none; }
 
 .report-box li {
-  padding: 6px 0;
-  border-bottom: 1px solid #eee;
-  color: #444;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--panel-edge);
+  color: var(--mist);
+  font-size: 0.92rem;
 }
+.report-box li:last-child { border-bottom: none; }
+.report-box li strong { color: #dcd6c8; }
 
-.report-box li:last-child {
-  border-bottom: none;
-}
+.report-status { color: var(--stop); font-weight: 700; }
 
-.status-abnormal {
-  color: #dc3545;
-  font-weight: bold;
-}
+.empty-note { color: var(--mist); font-size: 0.92rem; }
 </style>
