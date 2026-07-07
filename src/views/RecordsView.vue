@@ -1,162 +1,156 @@
 <template>
-  <NavBar />
+  <div class="register-wrapper">
+    <div class="register-container card-surface fade-in">
+      <div class="card-top">
+        <span class="chip"></span>
+        <span class="eyebrow-dark">NEW ID CARD</span>
+      </div>
 
-  <main class="container fade-in">
-    <section class="card-log">
-      <h2>刷卡紀錄</h2>
-      <p class="desc">以下顯示即時刷卡狀態與歷史紀錄。</p>
+      <h2>註冊識別證</h2>
 
-      <div class="status-box" :class="statusClass">{{ statusArea }}</div>
+      <form @submit.prevent="handleRegister">
+        <div class="field">
+          <label for="username">帳號名稱</label>
+          <input
+            v-model="username"
+            type="text"
+            id="username"
+            placeholder="請輸入用戶名"
+            required
+          />
+        </div>
 
-      <table id="recordTable">
-        <thead>
-          <tr>
-            <th>卡號 (UID)</th>
-            <th>時間</th>
-            <th>狀態</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="records.length === 0">
-            <td colspan="3" style="text-align:center; color: #999;">目前沒有資料</td>
-          </tr>
-          <tr v-for="(row, i) in records" :key="i" :class="row.status === '通過' ? 'row-pass' : 'row-deny'">
-            <td>{{ row.uid }}</td>
-            <td>{{ row.time }}</td>
-            <td>
-              <span :class="row.status === '通過' ? 'badge-pass' : 'badge-deny'">
-                {{ row.status }}
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-  </main>
+        <div class="field">
+          <label for="password">密碼</label>
+          <input
+            v-model="password"
+            type="password"
+            id="password"
+            placeholder="請輸入密碼"
+            required
+          />
+        </div>
 
-  <footer>
-    <p>© 2025 truman3309 | IoT Access Control System</p>
-  </footer>
+        <div class="field">
+          <label for="confirm-password">確認密碼</label>
+          <input
+            v-model="confirmPassword"
+            type="password"
+            id="confirm-password"
+            placeholder="請再次輸入密碼"
+            required
+          />
+        </div>
+
+        <button class="btn btn-primary submit-btn" type="submit" :disabled="loading">
+          {{ loading ? '製卡中…' : '製作識別證' }}
+        </button>
+      </form>
+
+      <p v-if="message" :class="['notice', messageType === 'error' ? 'err' : 'ok']">{{ message }}</p>
+
+      <div class="back-link">
+        <button class="btn btn-ghost" @click="router.push('/login')">← 返回登入</button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import NavBar from '../components/NavBar.vue'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-const statusArea = ref('等待刷卡...')
-const statusClass = ref('')
-const records = ref([])
-let timer = null
+const router = useRouter()
+const username = ref('')
+const password = ref('')
+const confirmPassword = ref('')
+const message = ref('')
+const messageType = ref('')
+const loading = ref(false)
 
-function randomUID() {
-  return Array.from({ length: 4 }, () =>
-    Math.floor(Math.random() * 256).toString(16).padStart(2, '0').toUpperCase()
-  ).join(':')
+async function handleRegister() {
+  message.value = ''
+
+  if (password.value !== confirmPassword.value) {
+    message.value = '兩次輸入的密碼不一樣，請重新確認。'
+    messageType.value = 'error'
+    return
+  }
+
+  loading.value = true
+
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username.value, password: password.value }),
+    })
+    const data = await res.json()
+
+    if (data.status === 'success') {
+      message.value = data.message
+      messageType.value = 'success'
+      username.value = ''
+      password.value = ''
+      confirmPassword.value = ''
+    } else {
+      message.value = data.message
+      messageType.value = 'error'
+    }
+  } catch {
+    message.value = '連不上伺服器，請稍後再試一次。'
+    messageType.value = 'error'
+  }
+
+  loading.value = false
 }
-
-function simulateSwipe() {
-  const uid = randomUID()
-  const now = new Date().toLocaleString('zh-TW', { hour12: false })
-  const status = Math.random() > 0.5 ? '通過' : '拒絕'
-  statusArea.value = `卡號：${uid}　狀態：${status}　時間：${now}`
-  statusClass.value = status === '通過' ? 'status-pass' : 'status-deny'
-  records.value.unshift({ uid, time: now, status })
-  // 最多保留 20 筆
-  if (records.value.length > 20) records.value.pop()
-}
-
-onMounted(() => {
-  timer = setInterval(simulateSwipe, 5000)
-})
-
-onUnmounted(() => {
-  clearInterval(timer)
-})
 </script>
 
 <style scoped>
-.container {
-  max-width: 900px;
-  margin: 40px auto;
-  padding: 0 20px;
+.register-wrapper {
+  background: var(--ink);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
 }
 
-.card-log h2 {
-  font-size: 1.6rem;
-  color: #0056b3;
-  margin-bottom: 8px;
-}
-
-.desc {
-  color: #666;
-  margin-bottom: 20px;
-}
-
-.status-box {
-  padding: 14px 20px;
-  border-radius: 8px;
-  background-color: #e9ecef;
-  font-weight: 600;
-  margin-bottom: 20px;
-  transition: background-color 0.4s, color 0.4s;
-  color: #555;
-}
-
-.status-box.status-pass {
-  background-color: #d4edda;
-  color: #155724;
-}
-
-.status-box.status-deny {
-  background-color: #f8d7da;
-  color: #721c24;
-}
-
-table {
+.register-container {
+  max-width: 420px;
   width: 100%;
-  border-collapse: collapse;
-  background: #fff;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  padding: 34px 32px;
 }
 
-th {
-  background-color: #0056b3;
-  color: #fff;
-  padding: 12px 16px;
-  text-align: left;
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
-td {
-  padding: 11px 16px;
-  border-bottom: 1px solid #eee;
-  color: #333;
+.eyebrow-dark {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--card-ink-soft);
 }
 
-.row-pass td {
-  background-color: #f8fff9;
+h2 {
+  color: var(--card-ink);
+  font-size: 1.4rem;
+  margin-bottom: 1.4rem;
 }
 
-.row-deny td {
-  background-color: #fff8f8;
-}
+.submit-btn { width: 100%; }
 
-.badge-pass {
-  background-color: #28a745;
-  color: white;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 600;
+.back-link {
+  margin-top: 18px;
+  text-align: center;
 }
-
-.badge-deny {
-  background-color: #dc3545;
-  color: white;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 600;
+.back-link .btn {
+  width: 100%;
 }
 </style>
