@@ -1,0 +1,22 @@
+# 相依套件
+node_modules/
+
+# 建置產物
+dist/
+dist-ssr/
+*.local
+
+# 環境變數（裡面會放 MongoDB 連線字串等機密資訊，絕對不要提交）
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel/
+
+# 編輯器 / 系統
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log

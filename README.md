@@ -56,6 +56,9 @@ src/
 # 安裝依賴
 npm install
 
+# 複製環境變數範本，填入 Vercel MongoDB 整合提供的連線字串
+cp .env.example .env
+
 # 開發模式
 npm run dev
 
@@ -65,9 +68,23 @@ npm run build
 
 開發模式預設於 `http://localhost:5173`
 
-## 模擬帳號
+## 後端與資料庫
 
-- 帳號：`admin`
-- 密碼：`1234`
+`/api` 資料夾是 Vercel Serverless Functions，透過 `mongodb` 官方驅動連接資料庫（連線設定在 `api/_lib/mongodb.js`，已接上 `@vercel/functions` 的 `attachDatabasePool`）。
 
-> 後端 API URL 請修改 `src/views/` 各元件中的 `API_BASE_URL` 變數。
+部署到 Vercel 前，先在專案的 Marketplace 裡連接 MongoDB 整合，它會自動注入連線字串環境變數；本機開發則手動填進 `.env`（範本見 `.env.example`）。
+
+| 端點 | 方法 | 用途 |
+|---|---|---|
+| `/api/register` | POST | 建立帳號（密碼以 bcrypt 雜湊存放） |
+| `/api/login` | POST | 驗證帳密 |
+| `/api/register-visitor` | POST | 訪客登記 |
+| `/api/access-records` | GET / POST | 撈取 / 寫入刷卡紀錄 |
+
+沒有預設帳號——第一次使用請先到「註冊識別證」頁面建立帳號，再用該帳密登入。
+
+## 上傳到 GitHub 前
+
+`.gitignore` 已經排除 `node_modules/`、`dist/` 和 `.env`。上傳前務必確認：
+- 沒有把填了真實連線字串的 `.env` 加進版本控制
+- 如果不小心 commit 過金鑰，記得回 MongoDB Atlas 撤銷並重新產生一組
