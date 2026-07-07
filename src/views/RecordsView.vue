@@ -1,156 +1,133 @@
 <template>
-  <div class="register-wrapper">
-    <div class="register-container card-surface fade-in">
-      <div class="card-top">
-        <span class="chip"></span>
-        <span class="eyebrow-dark">NEW ID CARD</span>
-      </div>
+  <NavBar />
 
-      <h2>註冊識別證</h2>
+  <main class="container fade-in">
+    <p class="eyebrow">Live Log</p>
+    <h2>刷卡紀錄</h2>
+    <p class="desc">即時刷卡狀態與最近的通行紀錄，最多保留 20 筆。</p>
 
-      <form @submit.prevent="handleRegister">
-        <div class="field">
-          <label for="username">帳號名稱</label>
-          <input
-            v-model="username"
-            type="text"
-            id="username"
-            placeholder="請輸入用戶名"
-            required
-          />
-        </div>
-
-        <div class="field">
-          <label for="password">密碼</label>
-          <input
-            v-model="password"
-            type="password"
-            id="password"
-            placeholder="請輸入密碼"
-            required
-          />
-        </div>
-
-        <div class="field">
-          <label for="confirm-password">確認密碼</label>
-          <input
-            v-model="confirmPassword"
-            type="password"
-            id="confirm-password"
-            placeholder="請再次輸入密碼"
-            required
-          />
-        </div>
-
-        <button class="btn btn-primary submit-btn" type="submit" :disabled="loading">
-          {{ loading ? '製卡中…' : '製作識別證' }}
-        </button>
-      </form>
-
-      <p v-if="message" :class="['notice', messageType === 'error' ? 'err' : 'ok']">{{ message }}</p>
-
-      <div class="back-link">
-        <button class="btn btn-ghost" @click="router.push('/login')">← 返回登入</button>
-      </div>
+    <div class="panel status-box">
+      <span class="led" :class="statusClass === 'status-pass' ? 'go' : statusClass === 'status-deny' ? 'stop' : ''"></span>
+      <span class="status-text">{{ statusArea }}</span>
     </div>
-  </div>
+
+    <div class="panel table-panel">
+      <table class="log-table">
+        <thead>
+          <tr>
+            <th>卡號 (UID)</th>
+            <th>時間</th>
+            <th>狀態</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="records.length === 0">
+            <td colspan="3" class="empty-row">尚未偵測到刷卡，感應區保持待命。</td>
+          </tr>
+          <tr v-for="(row, i) in records" :key="i" :class="row.status === '通過' ? 'row-pass' : 'row-deny'">
+            <td>{{ row.uid }}</td>
+            <td>{{ row.time }}</td>
+            <td>
+              <span :class="row.status === '通過' ? 'tag pass' : 'tag deny'">
+                {{ row.status }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 truman3309 | IoT Access Control System</p>
+  </footer>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, onUnmounted } from 'vue'
+import NavBar from '../components/NavBar.vue'
 
-const router = useRouter()
-const username = ref('')
-const password = ref('')
-const confirmPassword = ref('')
-const message = ref('')
-const messageType = ref('')
-const loading = ref(false)
+const statusArea = ref('讀取中…')
+const statusClass = ref('')
+const records = ref([])
+let timer = null
+let lastKnownKey = null
 
-async function handleRegister() {
-  message.value = ''
+function toRowStatus(status) {
+  return status === '正常' || status === '通過' ? '通過' : '拒絕'
+}
 
-  if (password.value !== confirmPassword.value) {
-    message.value = '兩次輸入的密碼不一樣，請重新確認。'
-    messageType.value = 'error'
-    return
-  }
-
-  loading.value = true
-
+async function loadRecords() {
   try {
-    const res = await fetch('/api/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username.value, password: password.value }),
-    })
+    const res = await fetch('/api/access-records?limit=20')
+    if (!res.ok) throw new Error('讀取失敗')
     const data = await res.json()
 
-    if (data.status === 'success') {
-      message.value = data.message
-      messageType.value = 'success'
-      username.value = ''
-      password.value = ''
-      confirmPassword.value = ''
+    records.value = data.map(r => ({ uid: r.uid, time: r.time, status: toRowStatus(r.status) }))
+
+    if (data.length > 0) {
+      const latest = data[0]
+      const key = `${latest.uid}-${latest.time}`
+      if (key !== lastKnownKey) {
+        lastKnownKey = key
+        const rowStatus = toRowStatus(latest.status)
+        statusArea.value = `卡號：${latest.uid}　狀態：${rowStatus}　時間：${latest.time}`
+        statusClass.value = rowStatus === '通過' ? 'status-pass' : 'status-deny'
+      }
     } else {
-      message.value = data.message
-      messageType.value = 'error'
+      statusArea.value = '等待刷卡…'
+      statusClass.value = ''
     }
   } catch {
-    message.value = '連不上伺服器，請稍後再試一次。'
-    messageType.value = 'error'
+    statusArea.value = '讀不到資料庫，稍後會自動重試。'
+    statusClass.value = 'status-deny'
   }
-
-  loading.value = false
 }
+
+onMounted(() => {
+  loadRecords()
+  timer = setInterval(loadRecords, 5000)
+})
+
+onUnmounted(() => {
+  clearInterval(timer)
+})
 </script>
 
 <style scoped>
-.register-wrapper {
-  background: var(--ink);
+.container {
+  max-width: 900px;
+  margin: 44px auto;
+  padding: 0 20px 20px;
+}
+
+h2 { font-size: 1.7rem; margin: 8px 0 8px; }
+
+.desc {
+  color: var(--mist);
+  margin-bottom: 24px;
+}
+
+.status-box {
+  padding: 16px 22px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  padding: 20px;
+  gap: 12px;
+  margin-bottom: 22px;
 }
 
-.register-container {
-  max-width: 420px;
-  width: 100%;
-  padding: 34px 32px;
+.status-text {
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  color: #dcd6c8;
 }
 
-.card-top {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
+.table-panel { padding: 8px 0 4px; overflow-x: auto; }
+.table-panel .log-table { min-width: 480px; }
 
-.eyebrow-dark {
-  font-family: var(--font-display);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--card-ink-soft);
-}
-
-h2 {
-  color: var(--card-ink);
-  font-size: 1.4rem;
-  margin-bottom: 1.4rem;
-}
-
-.submit-btn { width: 100%; }
-
-.back-link {
-  margin-top: 18px;
+.empty-row {
   text-align: center;
-}
-.back-link .btn {
-  width: 100%;
+  color: var(--mist-2);
+  padding: 26px 16px;
 }
 </style>
