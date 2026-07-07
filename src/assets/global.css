@@ -1,24 +1,89 @@
-/* === 全域設定 === */
+/* ============================================================
+   門禁系統設計語彙 — 刷卡機面板／識別證
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+:root {
+  /* 面板（控制台本體） */
+  --ink: #161b22;
+  --ink-2: #10151b;
+  --panel: #1f2733;
+  --panel-edge: #2b3542;
+  --panel-hi: #29323f;
+
+  /* 識別證（實體卡片材質） */
+  --card: #efe9db;
+  --card-edge: #ddd3ba;
+  --card-ink: #2a2620;
+  --card-ink-soft: #6b6353;
+
+  /* 黃銅晶片 / 強調 */
+  --brass: #b8934b;
+  --brass-hi: #d1ac66;
+
+  /* 狀態燈 */
+  --go: #2f9e6e;
+  --go-soft: #1e4636;
+  --go-glow: rgba(47, 158, 110, 0.55);
+  --stop: #d65c4f;
+  --stop-soft: #4a2521;
+  --stop-glow: rgba(214, 92, 79, 0.5);
+  --wait: #8a97a8;
+
+  /* 中性文字 */
+  --mist: #a9b3c1;
+  --mist-2: #5f6b7a;
+
+  --radius: 12px;
+  --font-display: 'Space Grotesk', 'Noto Sans TC', sans-serif;
+  --font-body: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Noto Sans TC', monospace;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-body {
-  font-family: "Noto Sans TC", Arial, sans-serif;
-  background-color: #f4f7fa;
-  color: #333;
-  line-height: 1.6;
+html {
+  color-scheme: dark;
 }
 
-/* === 頁尾 === */
+body {
+  font-family: var(--font-body);
+  background: var(--ink);
+  color: var(--mist);
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  color: #f2eee3;
+  letter-spacing: 0.01em;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: var(--font-display);
+}
+
+/* === 頁尾（控制台底座） === */
 footer {
   text-align: center;
-  background-color: #0056b3;
-  color: white;
-  padding: 16px;
-  margin-top: 40px;
+  background-color: var(--ink-2);
+  color: var(--mist-2);
+  padding: 18px;
+  margin-top: 48px;
+  font-size: 0.82rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+  border-top: 1px solid var(--panel-edge);
 }
 
 /* === 淡入動畫 === */
@@ -29,4 +94,212 @@ footer {
 
 .fade-in {
   animation: fadeIn 0.6s ease;
+}
+
+/* ============================================================
+   簽名元件：面板（四角螺絲孔的硬體面板）
+   ============================================================ */
+.panel {
+  position: relative;
+  background:
+    radial-gradient(circle 2.5px at 16px 16px, var(--mist-2) 97%, transparent 100%),
+    radial-gradient(circle 2.5px at calc(100% - 16px) 16px, var(--mist-2) 97%, transparent 100%),
+    radial-gradient(circle 2.5px at 16px calc(100% - 16px), var(--mist-2) 97%, transparent 100%),
+    radial-gradient(circle 2.5px at calc(100% - 16px) calc(100% - 16px), var(--mist-2) 97%, transparent 100%),
+    var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: var(--radius);
+}
+
+/* === LED 指示燈 === */
+.led {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--wait);
+  flex-shrink: 0;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+.led.go {
+  background: var(--go);
+  box-shadow: 0 0 9px 2px var(--go-glow);
+  animation: ledPulse 2.2s ease-in-out infinite;
+}
+.led.stop {
+  background: var(--stop);
+  box-shadow: 0 0 9px 2px var(--stop-glow);
+}
+@keyframes ledPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .led.go { animation: none; }
+  .fade-in { animation: none; }
+}
+
+/* === 標籤字（銘牌小標） === */
+.eyebrow {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--brass);
+}
+
+/* === 按鈕 === */
+.btn {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 8px;
+  padding: 11px 22px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
+  font-size: 0.95rem;
+}
+.btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+.btn-primary {
+  background: var(--brass);
+  color: #211a0c;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--brass-hi);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--panel-edge);
+  color: var(--mist);
+}
+.btn-ghost:hover:not(:disabled) {
+  border-color: var(--brass);
+  color: var(--brass-hi);
+}
+
+.btn-danger {
+  background: var(--stop);
+  color: #fff;
+}
+.btn-danger:hover:not(:disabled) {
+  background: #c14c40;
+}
+
+/* === 表單欄位（用於卡片材質背景上） === */
+.field {
+  margin-bottom: 18px;
+  text-align: left;
+}
+.field label {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--card-ink-soft);
+  margin-bottom: 7px;
+}
+.field input {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--card-edge);
+  border-radius: 7px;
+  font-size: 1rem;
+  font-family: var(--font-body);
+  background: #fbfaf5;
+  color: var(--card-ink);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.field input:focus {
+  outline: none;
+  border-color: var(--brass);
+  box-shadow: 0 0 0 3px rgba(184, 147, 75, 0.18);
+}
+.field input::placeholder { color: #a39a83; }
+
+/* 深色面板上的欄位標籤要換成淺色，維持可讀對比 */
+.panel .field label { color: var(--mist); }
+
+/* === 狀態訊息 === */
+.notice {
+  margin-top: 16px;
+  padding: 11px 15px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.notice.ok {
+  background: rgba(47, 158, 110, 0.12);
+  color: #2f9e6e;
+  border: 1px solid rgba(47, 158, 110, 0.35);
+}
+.notice.err {
+  background: rgba(214, 92, 79, 0.12);
+  color: #e07a70;
+  border: 1px solid rgba(214, 92, 79, 0.35);
+}
+
+/* === 日誌表格 === */
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+.log-table th {
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--mist-2);
+  padding: 0 16px 10px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--panel-edge);
+}
+.log-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--panel-edge);
+  color: var(--mist);
+}
+.log-table tr.row-pass td:first-child { border-left: 2px solid var(--go); }
+.log-table tr.row-deny td:first-child { border-left: 2px solid var(--stop); }
+
+.tag {
+  display: inline-block;
+  padding: 2px 11px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+.tag.pass { background: var(--go-soft); color: #6bd6ac; }
+.tag.deny { background: var(--stop-soft); color: #f0a89f; }
+
+/* === 卡片式容器（識別證材質，用於獨立頁面／個人識別證） === */
+.card-surface {
+  background: var(--card);
+  color: var(--card-ink);
+  border-radius: 16px;
+  border: 1px solid var(--card-edge);
+}
+
+/* 卡片右上角的黃銅晶片圖案，呼應實體感應卡 */
+.chip {
+  width: 34px;
+  height: 26px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, var(--brass-hi), var(--brass) 60%, #8a6d33);
+  position: relative;
+  flex-shrink: 0;
+}
+.chip::before {
+  content: '';
+  position: absolute;
+  inset: 4px 6px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 2px;
 }
