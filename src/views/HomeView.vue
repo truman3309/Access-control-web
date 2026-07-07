@@ -4,43 +4,56 @@
   <main class="main-content fade-in">
     <!-- Hero 區塊 -->
     <section class="hero">
-      <h2>歡迎使用門禁系統</h2>
-      <p>本系統整合 ESP32 硬體與雲端 Web 平台，提供即時門禁刷卡紀錄、訪客登記與查詢功能。</p>
+      <div class="hero-copy">
+        <p class="eyebrow">Live Reader</p>
+        <h2>歡迎使用門禁系統</h2>
+        <p class="hero-desc">本系統整合 ESP32 硬體與雲端 Web 平台，提供即時門禁刷卡紀錄、訪客登記與查詢功能。</p>
 
-      <!-- 作品介紹 (可展開) -->
-      <div class="intro-section">
-        <h3>
-          作品介紹
+        <!-- 作品介紹 (可展開) -->
+        <div class="intro-section">
           <button class="toggle-btn" @click="toggleIntro">
-            {{ introOpen ? '▲ 收合' : '▼ 展開' }}
+            {{ introOpen ? '▲ 收合作品介紹' : '▼ 展開作品介紹' }}
           </button>
-        </h3>
-        <ul v-if="introOpen" class="intro-list fade-in">
-          <li><strong>硬體模組：</strong>ESP32、RC522 RFID、0.96 吋 OLED、SD 卡模組</li>
-          <li><strong>前端技術：</strong>Vue 3、Vite、Pinia、Vue Router</li>
-          <li><strong>後端架構：</strong>Flask / Node.js + MySQL / Google Sheet</li>
-          <li><strong>特色：</strong>即時刷卡顯示、訪客登記、遠端紀錄查詢</li>
-        </ul>
+          <ul v-if="introOpen" class="intro-list fade-in">
+            <li><strong>硬體模組：</strong>ESP32、RC522 RFID、0.96 吋 OLED、SD 卡模組</li>
+            <li><strong>前端技術：</strong>Vue 3、Vite、Pinia、Vue Router</li>
+            <li><strong>後端架構：</strong>Flask / Node.js + MySQL / Google Sheet</li>
+            <li><strong>特色：</strong>即時刷卡顯示、訪客登記、遠端紀錄查詢</li>
+          </ul>
+        </div>
       </div>
 
-      <p v-if="!supported" class="unsupported">
-        這個瀏覽器不支援 Web Bluetooth，請改用桌面版 Chrome 或 Edge（iPhone / Safari 不支援）。
-      </p>
+      <!-- 感應動畫（簽名元素） -->
+      <div class="reader-illustration" :class="{ 'is-connected': connected }" aria-hidden="true">
+        <div class="reader-plate">
+          <span class="led" :class="connected ? 'go' : 'stop'"></span>
+        </div>
+        <div class="badge-card">
+          <span class="chip"></span>
+        </div>
+      </div>
     </section>
 
-    <!-- 狀態卡片 -->
+    <p v-if="!supported" class="notice err unsupported">
+      這個瀏覽器不支援 Web Bluetooth，請改用桌面版 Chrome 或 Edge（iPhone / Safari 不支援）。
+    </p>
+
+    <!-- 狀態面板 -->
     <div class="card-container">
-      <div class="card">
-        <h3>最後刷卡 UID</h3>
+      <div class="panel status-card">
+        <p class="eyebrow">最後刷卡 UID</p>
         <p class="uid">{{ lastUID }}</p>
-        <button class="btn-refresh" :disabled="!supported" @click="toggleConnect">
+        <button class="btn btn-primary" :disabled="!supported" @click="toggleConnect">
           {{ connected ? '中斷連線' : '連接 ESP32' }}
         </button>
       </div>
 
-      <div class="card">
-        <h3>系統狀態</h3>
-        <p :class="['status', statusClass]">{{ statusText }}</p>
+      <div class="panel status-card">
+        <p class="eyebrow">系統狀態</p>
+        <p class="status-line">
+          <span class="led" :class="statusClass === 'connected' ? 'go' : statusClass === 'error' ? 'stop' : ''"></span>
+          {{ statusText }}
+        </p>
       </div>
     </div>
   </main>
@@ -74,7 +87,6 @@ function toggleIntro() { introOpen.value = !introOpen.value }
 
 function formatUID(s) {
   const h = String(s).toUpperCase()
-  // 奇數長度時在前面補 0，避免最後一組只剩單一字元
   const padded = h.length % 2 === 0 ? h : '0' + h
   const m = padded.match(/.{1,2}/g)
   return m ? m.join(':') : h
@@ -98,15 +110,13 @@ async function connect() {
     await txCharic.startNotifications()
     txCharic.addEventListener('characteristicvaluechanged', onNotify)
 
-    // 連線本身到這裡已經成功，先把狀態確定下來，
-    // 不要讓後面的 GET 指令失敗影響「已連接」的判斷
     connected.value = true
     statusText.value = '已連接：' + (device.name || 'ESP32')
     statusClass.value = 'connected'
     buf = ''
 
     try {
-      await sendCmd('GET') // 先抓裝置上最後一筆，之後即時更新
+      await sendCmd('GET')
     } catch (e) {
       console.warn('送出 GET 指令失敗，但連線仍維持', e)
     }
@@ -120,7 +130,6 @@ async function sendCmd(cmd) { if (rxCharic) await rxCharic.writeValue(new TextEn
 
 function onNotify(e) {
   buf += decoder.decode(e.target.value)
-  // 用 replaceAll，避免同一批資料裡出現多次標記時只清掉第一個
   if (buf.includes('<<CLEARED>>')) { buf = buf.replaceAll('<<CLEARED>>', ''); lastUID.value = '（已清空）' }
   if (buf.includes('<<EOF>>')) { buf = buf.replaceAll('<<EOF>>', ''); statusText.value = '已連接，即時接收中'; statusClass.value = 'connected' }
   let idx
@@ -131,7 +140,7 @@ function onNotify(e) {
     try {
       const r = JSON.parse(line)
       if (r.uid) {
-        lastUID.value = formatUID(r.uid)               // 顯示最後刷卡 UID
+        lastUID.value = formatUID(r.uid)
         statusText.value = '已連接（最後狀態：' + (r.status === 'in' ? '進' : '出') + '）'
         statusClass.value = 'connected'
       }
@@ -154,30 +163,112 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.main-content { padding: 40px 20px; max-width: 900px; margin: 0 auto; }
-.hero { text-align: center; margin-bottom: 40px; }
-.hero h2 { font-size: 1.8rem; color: #0056b3; margin-bottom: 12px; }
-.hero p { color: #555; font-size: 1rem; }
-.unsupported {
-  background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;
-  padding: 10px 14px; border-radius: 8px; margin-top: 16px; font-size: 0.95rem;
-  max-width: 600px; margin-left: auto; margin-right: auto;
+.main-content { padding: 48px 24px 32px; max-width: 1000px; margin: 0 auto; }
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 40px;
+  align-items: center;
+  margin-bottom: 40px;
 }
-.intro-section { margin-top: 24px; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto; }
-.intro-section h3 { display: flex; align-items: center; gap: 12px; color: #333; font-size: 1.1rem; }
-.toggle-btn { background: none; border: 1px solid #007bff; border-radius: 4px; color: #007bff; cursor: pointer; font-size: 0.85rem; padding: 2px 10px; transition: all 0.2s; }
-.toggle-btn:hover { background-color: #007bff; color: white; }
-.intro-list { list-style: none; margin-top: 14px; line-height: 2; background: #f0f6ff; border-radius: 8px; padding: 16px 20px; }
-.intro-list li { color: #444; }
-.card-container { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
-.card { background-color: #fff; border-radius: 12px; padding: 24px; text-align: center; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
-.card h3 { color: #007bff; margin-bottom: 12px; }
-.uid { font-size: 1.3rem; font-weight: bold; color: #333; margin-bottom: 14px; word-break: break-all; }
-.btn-refresh { background-color: #ffdf5d; border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; font-weight: 600; transition: background-color 0.3s; }
-.btn-refresh:hover:not(:disabled) { background-color: #f5c93d; }
-.btn-refresh:disabled { opacity: 0.45; cursor: not-allowed; }
-.status { font-size: 1rem; font-weight: 600; padding: 8px 0; }
-.status.waiting { color: #999; }
-.status.connected { color: #28a745; }
-.status.error { color: #dc3545; }
+
+.hero h2 { font-size: 2rem; margin: 10px 0 14px; }
+.hero-desc { color: var(--mist); max-width: 46ch; }
+
+.intro-section { margin-top: 26px; }
+.toggle-btn {
+  background: none;
+  border: 1px solid var(--panel-edge);
+  border-radius: 20px;
+  color: var(--mist);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 7px 16px;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+.toggle-btn:hover { border-color: var(--brass); color: var(--brass-hi); }
+
+.intro-list {
+  list-style: none;
+  margin-top: 16px;
+  line-height: 2;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 10px;
+  padding: 18px 22px;
+}
+.intro-list li { color: var(--mist); font-size: 0.92rem; }
+.intro-list strong { color: #dcd6c8; }
+
+.unsupported { max-width: 640px; margin: 0 0 24px; }
+
+/* === 感應動畫 === */
+.reader-illustration {
+  position: relative;
+  height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.reader-plate {
+  width: 130px;
+  height: 130px;
+  border-radius: 20px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 14px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+.badge-card {
+  position: absolute;
+  width: 116px;
+  height: 74px;
+  border-radius: 10px;
+  background: linear-gradient(155deg, var(--card), #e2dac4);
+  border: 1px solid var(--card-edge);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: flex-start;
+  padding: 10px;
+  transform: translateY(52px) rotate(-3deg);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reader-illustration.is-connected .badge-card {
+  transform: translateY(-4px) rotate(-1deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-card { transition: none; }
+}
+
+/* === 狀態面板 === */
+.card-container { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.status-card { padding: 26px; }
+.uid {
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #f2eee3;
+  margin: 10px 0 18px;
+  word-break: break-all;
+}
+.status-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #dcd6c8;
+  margin-top: 10px;
+  font-size: 1rem;
+}
+
+@media (max-width: 760px) {
+  .hero { grid-template-columns: 1fr; }
+  .reader-illustration { order: -1; height: 150px; }
+}
 </style>
