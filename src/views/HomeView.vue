@@ -71,7 +71,14 @@ let buf = ''
 const decoder = new TextDecoder()
 
 function toggleIntro() { introOpen.value = !introOpen.value }
-function formatUID(s) { const h = String(s).toUpperCase(); const m = h.match(/.{1,2}/g); return m ? m.join(':') : h }
+
+function formatUID(s) {
+  const h = String(s).toUpperCase()
+  // 奇數長度時在前面補 0，避免最後一組只剩單一字元
+  const padded = h.length % 2 === 0 ? h : '0' + h
+  const m = padded.match(/.{1,2}/g)
+  return m ? m.join(':') : h
+}
 
 function toggleConnect() {
   if (connected.value) disconnect()
@@ -90,11 +97,19 @@ async function connect() {
     rxCharic = await service.getCharacteristic(RX)
     await txCharic.startNotifications()
     txCharic.addEventListener('characteristicvaluechanged', onNotify)
+
+    // 連線本身到這裡已經成功，先把狀態確定下來，
+    // 不要讓後面的 GET 指令失敗影響「已連接」的判斷
     connected.value = true
     statusText.value = '已連接：' + (device.name || 'ESP32')
     statusClass.value = 'connected'
     buf = ''
-    await sendCmd('GET')   // 先抓裝置上最後一筆，之後即時更新
+
+    try {
+      await sendCmd('GET') // 先抓裝置上最後一筆，之後即時更新
+    } catch (e) {
+      console.warn('送出 GET 指令失敗，但連線仍維持', e)
+    }
   } catch (err) {
     if (err && err.name === 'NotFoundError') { statusText.value = '已取消選擇'; statusClass.value = 'waiting' }
     else { statusText.value = '連線失敗'; statusClass.value = 'error'; lastUID.value = '無法取得' }
@@ -105,8 +120,9 @@ async function sendCmd(cmd) { if (rxCharic) await rxCharic.writeValue(new TextEn
 
 function onNotify(e) {
   buf += decoder.decode(e.target.value)
-  if (buf.includes('<<CLEARED>>')) { buf = buf.replace('<<CLEARED>>', ''); lastUID.value = '（已清空）' }
-  if (buf.includes('<<EOF>>')) { buf = buf.replace('<<EOF>>', ''); statusText.value = '已連接，即時接收中'; statusClass.value = 'connected' }
+  // 用 replaceAll，避免同一批資料裡出現多次標記時只清掉第一個
+  if (buf.includes('<<CLEARED>>')) { buf = buf.replaceAll('<<CLEARED>>', ''); lastUID.value = '（已清空）' }
+  if (buf.includes('<<EOF>>')) { buf = buf.replaceAll('<<EOF>>', ''); statusText.value = '已連接，即時接收中'; statusClass.value = 'connected' }
   let idx
   while ((idx = buf.indexOf('\n')) >= 0) {
     const line = buf.slice(0, idx).trim()
