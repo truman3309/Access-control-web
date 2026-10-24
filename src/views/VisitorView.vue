@@ -1,10 +1,10 @@
 <template>
   <NavBar />
 
-  <main class="container fade-in">
+  <main class="page page-sm fade-in">
     <p class="eyebrow">Visitor Slot</p>
-    <h2>訪客預約</h2>
-    <p class="desc">輸入訪客姓名與卡片 UID，為當天來訪的人先開一張臨時通行證。</p>
+    <h2 class="page-title">訪客預約</h2>
+    <p class="page-desc">輸入訪客姓名與卡片 UID，為當天來訪的人先開一張臨時通行證。</p>
 
     <form class="panel visitor-form" @submit.prevent="handleSubmit">
       <div class="field">
@@ -29,7 +29,7 @@
         />
       </div>
 
-      <button type="submit" class="btn btn-primary submit-btn" :disabled="loading">
+      <button type="submit" class="btn btn-primary btn-block" :disabled="loading">
         {{ loading ? '登記中…' : '提交預約' }}
       </button>
     </form>
@@ -91,20 +91,10 @@ function showMessage(text, type) {
 </script>
 
 <style scoped>
-.container {
-  max-width: 560px;
-  margin: 44px auto;
-  padding: 0 20px 20px;
-}
-
-h2 { font-size: 1.7rem; margin: 8px 0 8px; }
-
-.desc {
-  color: var(--mist);
-  margin-bottom: 26px;
-}
-
 .visitor-form { padding: 28px; }
+.visitor-form .field:last-of-type { margin-bottom: 22px; }
 
-.submit-btn { width: 100%; margin-top: 4px; }
+@media (max-width: 480px) {
+  .visitor-form { padding: 22px 18px; }
+}
 </style>

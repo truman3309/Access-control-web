@@ -1,5 +1,5 @@
 <template>
-  <header class="profile-header">
+  <header class="profile-bar">
     <span class="header-title">個人識別證</span>
     <nav class="header-nav">
       <button class="btn btn-ghost" @click="router.push('/')">返回首頁</button>
@@ -7,21 +7,11 @@
     </nav>
   </header>
 
-  <main class="container fade-in">
-    <section class="card-surface id-card">
-      <div class="id-card-top">
-        <span class="chip"></span>
-        <span class="eyebrow-dark">STAFF ID</span>
-      </div>
+  <main class="page page-sm fade-in">
+    <section class="panel id-card">
+      <div class="avatar" aria-hidden="true">{{ (userData.name || '?').slice(0, 1).toUpperCase() }}</div>
 
-      <div class="avatar-wrapper">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="avatar">
-          <circle cx="50" cy="50" r="50" fill="#e4dcc4" />
-          <circle cx="50" cy="38" r="18" fill="#b8934b" opacity="0.75" />
-          <ellipse cx="50" cy="80" rx="28" ry="18" fill="#b8934b" opacity="0.55" />
-        </svg>
-      </div>
-
+      <p class="eyebrow">Staff ID</p>
       <h2>{{ userData.name || '未登入' }}</h2>
 
       <div class="info-list">
@@ -47,7 +37,7 @@
   </main>
 
   <!-- 登出確認對話框 -->
-  <div v-if="showConfirm" class="modal-overlay" @click.self="showConfirm = false">
+  <div v-if="showConfirm" class="modal-overlay" role="dialog" aria-modal="true" @click.self="showConfirm = false">
     <div class="modal-box panel">
       <p>確定要登出嗎？</p>
       <div class="modal-actions">
@@ -98,112 +88,86 @@ function changePassword() {
 </script>
 
 <style scoped>
-.profile-header {
+.profile-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 28px;
-  background-color: var(--ink-2);
-  border-bottom: 1px solid var(--panel-edge);
+  gap: 12px;
+  padding: 12px 28px;
+  padding-top: calc(12px + env(safe-area-inset-top));
+  background: var(--glass);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 var(--glass-hi);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
 }
-
 .header-title {
-  font-family: var(--font-display);
   font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: #f2eee3;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
 }
-
 .header-nav { display: flex; gap: 10px; }
-
-.container {
-  max-width: 460px;
-  margin: 48px auto;
-  padding: 0 20px;
-}
+.header-nav .btn { padding: 8px 18px; font-size: 0.88rem; }
 
 .id-card {
-  padding: 34px 32px;
+  padding: 36px 32px;
   text-align: center;
 }
 
-.id-card-top {
+.avatar {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 16px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(145deg, #64b5ff, #0a84ff);
+  box-shadow: 0 10px 28px rgba(10, 132, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-.eyebrow-dark {
-  font-family: var(--font-display);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--card-ink-soft);
+.id-card h2 {
+  font-size: 1.5rem;
+  margin: 2px 0 24px;
 }
 
-.avatar-wrapper { margin-bottom: 16px; }
-.avatar { width: 84px; height: 84px; border-radius: 50%; }
-
-h2 {
-  font-size: 1.35rem;
-  color: var(--card-ink);
-  margin-bottom: 22px;
-}
-
+/* 像 iOS 設定頁的分組列表 */
 .info-list {
   text-align: left;
   margin-bottom: 24px;
-  border-top: 1px solid var(--card-edge);
-  padding-top: 14px;
+  background: var(--field);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 2px 18px;
 }
-
 .info-item {
   display: flex;
   justify-content: space-between;
-  padding: 9px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  font-family: var(--font-mono);
-  font-size: 0.9rem;
+  gap: 16px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 0.92rem;
 }
-
-.info-label { font-weight: 600; color: var(--card-ink-soft); }
-.info-value { color: var(--card-ink); }
+.info-item:last-child { border-bottom: none; }
+.info-label { color: var(--text-3); font-weight: 500; flex-shrink: 0; }
+.info-value { color: var(--text); text-align: right; word-break: break-all; }
 
 .actions {
   display: flex;
   gap: 10px;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(10, 13, 17, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.modal-box {
-  padding: 30px 40px;
-  text-align: center;
-}
-
-.modal-box p {
-  font-size: 1rem;
-  margin-bottom: 20px;
-  color: #f2eee3;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
+@media (max-width: 480px) {
+  .profile-bar { padding-left: 16px; padding-right: 16px; }
+  .id-card { padding: 30px 20px; }
 }
 </style>

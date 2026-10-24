@@ -1,10 +1,16 @@
 <template>
-  <div class="register-wrapper">
-    <div class="register-container fade-in">
-      <h2>註冊帳號</h2>
+  <div class="auth-wrapper">
+    <div class="auth-card panel fade-in">
+      <div class="auth-head">
+        <span class="app-icon green lg" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        </span>
+        <p class="eyebrow">New ID Card</p>
+        <h2>註冊帳號</h2>
+      </div>
 
       <form @submit.prevent="handleRegister">
-        <div class="form-group">
+        <div class="field">
           <label for="username">帳號名稱</label>
           <input
             v-model="username"
@@ -12,10 +18,11 @@
             id="username"
             placeholder="請輸入用戶名"
             required
+            autocomplete="username"
           />
         </div>
 
-        <div class="form-group">
+        <div class="field">
           <label for="password">密碼</label>
           <input
             v-model="password"
@@ -23,10 +30,11 @@
             id="password"
             placeholder="請輸入密碼"
             required
+            autocomplete="new-password"
           />
         </div>
 
-        <div class="form-group">
+        <div class="field">
           <label for="confirm-password">確認密碼</label>
           <input
             v-model="confirmPassword"
@@ -34,18 +42,19 @@
             id="confirm-password"
             placeholder="請再次輸入密碼"
             required
+            autocomplete="new-password"
           />
         </div>
 
-        <button type="submit" :disabled="loading">
+        <button type="submit" class="btn btn-primary btn-block" :disabled="loading">
           {{ loading ? '處理中...' : '送出註冊' }}
         </button>
+
+        <div v-if="message" :class="['notice', messageType === 'error' ? 'err' : 'ok']">{{ message }}</div>
       </form>
 
-      <p v-if="message" :class="['register-message', messageType]">{{ message }}</p>
-
-      <div class="back-link">
-        <button @click="router.push('/login')">← 返回登入</button>
+      <div class="auth-foot">
+        <button class="link-btn" @click="router.push('/login')">← 返回登入</button>
       </div>
     </div>
   </div>
@@ -100,118 +109,3 @@ async function handleRegister() {
   loading.value = false
 }
 </script>
-
-<style scoped>
-.register-wrapper {
-  background-color: #f4f4f9;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  padding: 20px;
-}
-
-.register-container {
-  max-width: 450px;
-  width: 100%;
-  padding: 30px;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  background-color: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-h2 {
-  text-align: center;
-  color: #007bff;
-  margin-bottom: 25px;
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: bold;
-  color: #555;
-}
-
-input[type="text"],
-input[type="password"] {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 1rem;
-  box-sizing: border-box;
-  transition: border-color 0.3s;
-}
-
-input:focus {
-  border-color: #007bff;
-  outline: none;
-  box-shadow: 0 0 4px rgba(0, 123, 255, 0.2);
-}
-
-button[type="submit"] {
-  width: 100%;
-  padding: 12px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  font-size: 1.05em;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-button[type="submit"]:hover:not(:disabled) {
-  background-color: #0056b3;
-}
-
-button[type="submit"]:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.register-message {
-  margin-top: 20px;
-  text-align: center;
-  font-weight: bold;
-  padding: 10px;
-  border-radius: 6px;
-}
-
-.register-message.success {
-  color: #155724;
-  background-color: #d4edda;
-  border: 1px solid #c3e6cb;
-}
-
-.register-message.error {
-  color: #721c24;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-}
-
-.back-link {
-  margin-top: 16px;
-  text-align: center;
-}
-
-.back-link button {
-  background: none;
-  border: none;
-  color: #007bff;
-  cursor: pointer;
-  font-size: 0.9rem;
-  text-decoration: underline;
-  padding: 0;
-}
-
-.back-link button:hover {
-  color: #0056b3;
-}
-</style>

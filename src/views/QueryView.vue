@@ -1,15 +1,17 @@
 <template>
   <NavBar />
 
-  <main class="container fade-in">
+  <main class="page fade-in">
     <p class="eyebrow">Search Archive</p>
-    <h2>進出紀錄查詢</h2>
+    <h2 class="page-title">進出紀錄查詢</h2>
 
-    <div class="search-bar panel">
+    <div class="panel search-bar">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input
         v-model="searchQuery"
         type="text"
         placeholder="輸入姓名或卡片 UID…"
+        aria-label="搜尋姓名或卡片 UID"
         @keyup.enter="searchRecords"
       />
       <button class="btn btn-primary" @click="searchRecords">查詢</button>
@@ -17,7 +19,7 @@
 
     <div class="panel table-panel">
       <div class="table-scroll">
-        <table class="log-table">
+        <table class="log-table stack">
           <thead>
             <tr>
               <th>姓名</th>
@@ -39,11 +41,11 @@
               :key="i"
               :class="r.status && r.status !== '正常' ? 'row-deny' : 'row-pass'"
             >
-              <td>{{ r.visitor_name || '未登記訪客' }}</td>
-              <td>{{ r.uid }}</td>
-              <td>{{ r.time }}</td>
-              <td>{{ r.type || '刷卡' }}</td>
-              <td>
+              <td data-label="姓名">{{ r.visitor_name || '未登記訪客' }}</td>
+              <td class="mono" data-label="卡片 UID">{{ r.uid }}</td>
+              <td class="mono" data-label="時間">{{ r.time }}</td>
+              <td data-label="類型">{{ r.type || '刷卡' }}</td>
+              <td data-label="狀態">
                 <span :class="r.status && r.status !== '正常' ? 'tag deny' : 'tag pass'">
                   {{ r.status || '正常' }}
                 </span>
@@ -124,66 +126,46 @@ onMounted(fetchRecords)
 </script>
 
 <style scoped>
-.container {
-  max-width: 960px;
-  margin: 44px auto;
-  padding: 0 20px 20px;
-}
-
-h2 { font-size: 1.7rem; margin: 8px 0 22px; }
-
 .search-bar {
   display: flex;
+  align-items: center;
   gap: 10px;
-  padding: 10px;
-  margin-bottom: 22px;
+  padding: 8px 8px 8px 20px;
+  margin-bottom: 18px;
+  border-radius: 980px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-
+.search-bar:focus-within {
+  border-color: var(--blue);
+  box-shadow: var(--shadow), 0 0 0 4px var(--blue-tint);
+}
+.search-icon { width: 18px; height: 18px; color: var(--text-3); flex-shrink: 0; }
 .search-bar input {
   flex: 1;
-  padding: 11px 14px;
-  border: 1px solid var(--panel-edge);
-  border-radius: 7px;
-  font-size: 1rem;
-  font-family: var(--font-body);
-  background: var(--ink-2);
-  color: #dcd6c8;
-  transition: border-color 0.2s ease;
-}
-.search-bar input::placeholder { color: var(--mist-2); }
-.search-bar input:focus {
+  min-width: 0;
+  padding: 8px 4px;
+  border: none;
   outline: none;
-  border-color: var(--brass);
+  background: none;
+  font-size: 1rem; /* 16px 以上，iPhone 才不會自動放大畫面 */
+  color: var(--text);
 }
 
-.table-panel { padding: 8px 0 4px; margin-bottom: 34px; }
-.table-scroll { overflow-x: auto; }
-.table-panel .log-table { min-width: 600px; }
+.table-panel { padding: 6px 0 4px; margin-bottom: 36px; overflow: hidden; }
 
-.empty-row {
-  text-align: center;
-  color: var(--mist-2);
-  padding: 26px 16px;
-}
-
-.report-section h3 { margin: 6px 0 14px; font-size: 1.2rem; }
-
+.report-section h3 { margin: 6px 0 14px; font-size: 1.25rem; }
 .report-btn { margin-bottom: 16px; }
 
-.report-box { padding: 18px 22px; }
-
+.report-box { padding: 8px 24px; }
 .report-box ul { list-style: none; }
-
 .report-box li {
-  padding: 8px 0;
-  border-bottom: 1px solid var(--panel-edge);
-  color: var(--mist);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--text-2);
   font-size: 0.92rem;
 }
 .report-box li:last-child { border-bottom: none; }
-.report-box li strong { color: #dcd6c8; }
-
-.report-status { color: var(--stop); font-weight: 700; }
-
-.empty-note { color: var(--mist); font-size: 0.92rem; }
+.report-box li strong { color: var(--text); font-weight: 600; }
+.report-status { color: var(--red); font-weight: 600; }
+.empty-note { color: var(--text-2); font-size: 0.92rem; padding: 10px 0; }
 </style>

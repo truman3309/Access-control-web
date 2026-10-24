@@ -1,12 +1,13 @@
 <template>
-  <div class="login-wrapper">
-    <div class="login-container card-surface fade-in">
-      <div class="card-top">
-        <span class="chip"></span>
-        <span class="eyebrow-dark">ID ACCESS CARD</span>
+  <div class="auth-wrapper">
+    <div class="auth-card panel fade-in">
+      <div class="auth-head">
+        <span class="app-icon lg" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </span>
+        <p class="eyebrow">ID Access Card</p>
+        <h2>門禁登入</h2>
       </div>
-
-      <h2>門禁登入</h2>
 
       <form @submit.prevent="handleLogin">
         <div class="field">
@@ -33,16 +34,16 @@
           />
         </div>
 
-        <button class="btn btn-primary submit-btn" type="submit" :disabled="loading">
+        <button class="btn btn-primary btn-block" type="submit" :disabled="loading">
           {{ loading ? '刷卡驗證中…' : '刷卡登入' }}
         </button>
 
         <div v-if="message" :class="['notice', messageType === 'error' ? 'err' : 'ok']">{{ message }}</div>
       </form>
 
-      <div class="register-link">
+      <div class="auth-foot">
         <p>還沒有識別證嗎？</p>
-        <button class="btn btn-ghost" @click="router.push('/register')">前往註冊</button>
+        <button class="btn btn-ghost btn-block" @click="router.push('/register')">前往註冊</button>
       </div>
     </div>
   </div>
@@ -98,63 +99,3 @@ async function handleLogin() {
   loading.value = false
 }
 </script>
-
-<style scoped>
-.login-wrapper {
-  font-family: var(--font-body);
-  background: var(--ink);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  padding: 20px;
-}
-
-.login-container {
-  padding: 36px 34px;
-  width: 100%;
-  max-width: 400px;
-}
-
-.card-top {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 22px;
-}
-
-.eyebrow-dark {
-  font-family: var(--font-display);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--card-ink-soft);
-}
-
-h2 {
-  color: var(--card-ink);
-  font-size: 1.5rem;
-  margin-bottom: 1.6rem;
-}
-
-.submit-btn { width: 100%; margin-top: 4px; }
-
-.register-link {
-  margin-top: 26px;
-  padding-top: 18px;
-  border-top: 1px solid var(--card-edge);
-}
-
-.register-link p {
-  color: var(--card-ink-soft);
-  margin-bottom: 12px;
-  font-size: 0.88rem;
-}
-
-.register-link .btn { width: 100%; }
-
-@media (max-width: 480px) {
-  .login-container { padding: 30px 22px; }
-}
-</style>

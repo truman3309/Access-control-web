@@ -1,10 +1,10 @@
 <template>
   <NavBar />
 
-  <main class="container fade-in">
+  <main class="page fade-in">
     <p class="eyebrow">Live Log</p>
-    <h2>刷卡紀錄</h2>
-    <p class="desc">即時刷卡狀態與最近的通行紀錄，最多保留 20 筆。</p>
+    <h2 class="page-title">刷卡紀錄</h2>
+    <p class="page-desc">即時刷卡狀態與最近的通行紀錄，最多保留 20 筆。</p>
 
     <div class="panel status-box">
       <span class="led" :class="statusClass === 'status-pass' ? 'go' : statusClass === 'status-deny' ? 'stop' : ''"></span>
@@ -12,29 +12,31 @@
     </div>
 
     <div class="panel table-panel">
-      <table class="log-table">
-        <thead>
-          <tr>
-            <th>卡號 (UID)</th>
-            <th>時間</th>
-            <th>狀態</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="records.length === 0">
-            <td colspan="3" class="empty-row">尚未偵測到刷卡，感應區保持待命。</td>
-          </tr>
-          <tr v-for="(row, i) in records" :key="i" :class="row.status === '通過' ? 'row-pass' : 'row-deny'">
-            <td>{{ row.uid }}</td>
-            <td>{{ row.time }}</td>
-            <td>
-              <span :class="row.status === '通過' ? 'tag pass' : 'tag deny'">
-                {{ row.status }}
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-scroll">
+        <table class="log-table stack">
+          <thead>
+            <tr>
+              <th>卡號 (UID)</th>
+              <th>時間</th>
+              <th>狀態</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="records.length === 0">
+              <td colspan="3" class="empty-row">尚未偵測到刷卡，感應區保持待命。</td>
+            </tr>
+            <tr v-for="(row, i) in records" :key="i" :class="row.status === '通過' ? 'row-pass' : 'row-deny'">
+              <td class="mono" data-label="卡號 (UID)">{{ row.uid }}</td>
+              <td class="mono" data-label="時間">{{ row.time }}</td>
+              <td data-label="狀態">
+                <span :class="row.status === '通過' ? 'tag pass' : 'tag deny'">
+                  {{ row.status }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </main>
 
@@ -95,39 +97,21 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.container {
-  max-width: 900px;
-  margin: 44px auto;
-  padding: 0 20px 20px;
-}
-
-h2 { font-size: 1.7rem; margin: 8px 0 8px; }
-
-.desc {
-  color: var(--mist);
-  margin-bottom: 24px;
-}
-
 .status-box {
   padding: 16px 22px;
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 22px;
+  margin-bottom: 18px;
+  border-radius: 20px;
 }
 
 .status-text {
   font-family: var(--font-mono);
-  font-size: 0.92rem;
-  color: #dcd6c8;
+  font-size: 0.9rem;
+  color: var(--text);
+  word-break: break-all;
 }
 
-.table-panel { padding: 8px 0 4px; overflow-x: auto; }
-.table-panel .log-table { min-width: 480px; }
-
-.empty-row {
-  text-align: center;
-  color: var(--mist-2);
-  padding: 26px 16px;
-}
+.table-panel { padding: 6px 0 4px; overflow: hidden; }
 </style>
