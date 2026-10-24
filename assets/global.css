@@ -1,0 +1,563 @@
+/* ============================================================
+   門禁系統 — Apple 風格深色玻璃
+   深藍灰底 + 半透明玻璃面板 + 膠囊按鈕
+   與「號段分配工具集」共用同一組色票
+   ============================================================ */
+
+:root {
+  color-scheme: dark;
+
+  /* 背景：深藍灰漸層 + 兩顆很淡的冷色光 */
+  --bg-a: #14171e;
+  --bg-b: #191c26;
+  --bg-c: #1f1b26;
+  --orb-1: rgba(90, 110, 160, 0.22);
+  --orb-2: rgba(70, 120, 150, 0.18);
+
+  /* 文字 */
+  --text: #f5f5f7;
+  --text-2: rgba(245, 245, 247, 0.66);
+  --text-3: rgba(245, 245, 247, 0.42);
+
+  /* 強調色與狀態色 */
+  --blue: #64b5ff;
+  --blue-solid: #0a84ff;
+  --blue-hover: #3c9bff;
+  --blue-tint: rgba(100, 181, 255, 0.16);
+
+  --green: #30d158;
+  --green-text: #5ce07f;
+  --green-tint: rgba(48, 209, 88, 0.18);
+  --green-glow: rgba(48, 209, 88, 0.55);
+
+  --red: #ff6b61;
+  --red-solid: #ff453a;
+  --red-tint: rgba(255, 69, 58, 0.18);
+  --red-glow: rgba(255, 69, 58, 0.5);
+
+  --wait: #8e8e93;
+
+  /* 玻璃 */
+  --glass: rgba(30, 30, 40, 0.5);
+  --glass-strong: rgba(50, 50, 64, 0.7);
+  --glass-solid: rgba(24, 24, 34, 0.92);
+  --field: rgba(255, 255, 255, 0.07);
+  --field-hover: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-hi: rgba(255, 255, 255, 0.1);
+  --hairline: rgba(255, 255, 255, 0.1);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --blur: blur(24px) saturate(160%);
+
+  --radius: 24px;
+  --radius-sm: 12px;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "PingFang TC", "Microsoft JhengHei", monospace;
+  --ease: cubic-bezier(0.22, 0.8, 0.32, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  color-scheme: dark;
+  background: var(--bg-b);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: linear-gradient(135deg, var(--bg-a) 0%, var(--bg-b) 48%, var(--bg-c) 100%) fixed;
+  color: var(--text-2);
+  line-height: 1.65;
+  min-height: 100vh;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 兩顆模糊光球：讓玻璃後面有東西可以透 */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+  z-index: 0;
+}
+body::before {
+  width: 420px;
+  height: 420px;
+  background: var(--orb-1);
+  top: -120px;
+  right: -100px;
+}
+body::after {
+  width: 480px;
+  height: 480px;
+  background: var(--orb-2);
+  bottom: -160px;
+  left: -140px;
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+}
+
+h1, h2, h3 {
+  color: var(--text);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+a { color: inherit; }
+button, input { font-family: inherit; }
+::selection { background: rgba(100, 181, 255, 0.4); color: #fff; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+footer {
+  text-align: center;
+  color: var(--text-3);
+  padding: 18px 16px;
+  margin-top: 40px;
+  font-size: 0.8rem;
+}
+
+/* === 淡入動畫 === */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.5s var(--ease); }
+
+/* ============================================================
+   玻璃面板（只套在外層大元素，避免拖慢效能）
+   ============================================================ */
+.panel {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow), inset 0 1px 0 var(--glass-hi);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+}
+
+/* 不支援 backdrop-filter 的瀏覽器：改用接近純色的底 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --glass: rgba(30, 31, 42, 0.94);
+    --glass-strong: rgba(44, 45, 60, 0.96);
+  }
+}
+
+/* === App 圖示：圓角漸層方塊 === */
+.app-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  color: #fff;
+  background: linear-gradient(145deg, #64b5ff, #0a84ff);
+  box-shadow: 0 6px 16px rgba(10, 132, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+.app-icon svg { width: 52%; height: 52%; }
+.app-icon.green {
+  background: linear-gradient(145deg, #6fcf8e, #3fa85e);
+  box-shadow: 0 6px 16px rgba(63, 168, 94, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.app-icon.amber {
+  background: linear-gradient(145deg, #f0b867, #d98f2b);
+  box-shadow: 0 6px 16px rgba(217, 143, 43, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.app-icon.sm { width: 30px; height: 30px; border-radius: 9px; }
+.app-icon.lg { width: 64px; height: 64px; border-radius: 18px; }
+
+/* === LED 指示燈 === */
+.led {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--wait);
+  flex-shrink: 0;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+.led.go {
+  background: var(--green);
+  box-shadow: 0 0 9px 2px var(--green-glow);
+  animation: ledPulse 2.2s ease-in-out infinite;
+}
+.led.stop {
+  background: var(--red-solid);
+  box-shadow: 0 0 9px 2px var(--red-glow);
+}
+@keyframes ledPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* === 小標 === */
+.eyebrow {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--blue);
+}
+.label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+/* ============================================================
+   頁面容器
+   ============================================================ */
+.page {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 24px 8px;
+}
+.page-sm { max-width: 600px; }
+.page-lg { max-width: 1040px; }
+
+.page-title {
+  font-size: clamp(1.8rem, 4.5vw, 2.4rem);
+  letter-spacing: -0.03em;
+  margin: 6px 0 10px;
+}
+.page-desc {
+  color: var(--text-2);
+  max-width: 56ch;
+  margin-bottom: 26px;
+}
+
+/* ============================================================
+   按鈕
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 980px;
+  padding: 10px 22px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease, opacity 0.2s ease;
+}
+.btn:active:not(:disabled) { transform: scale(0.97); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-block { width: 100%; }
+
+.btn-primary {
+  background: var(--blue-solid);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(10, 132, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.btn-primary:hover:not(:disabled) { background: var(--blue-hover); }
+
+.btn-ghost {
+  background: var(--field);
+  border-color: var(--glass-border);
+  color: var(--blue);
+}
+.btn-ghost:hover:not(:disabled) { background: var(--blue-tint); }
+
+.btn-danger {
+  background: var(--red-solid);
+  color: #fff;
+}
+.btn-danger:hover:not(:disabled) { background: #e03a30; }
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--blue);
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 500;
+  padding: 8px;
+}
+.link-btn:hover { color: var(--blue-hover); }
+
+/* ============================================================
+   表單欄位
+   ============================================================ */
+.field {
+  margin-bottom: 18px;
+  text-align: left;
+}
+.field label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+.field input,
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem; /* 16px 以上，iPhone 才不會自動放大畫面 */
+  font-family: var(--font-sans);
+  color: var(--text);
+  background: var(--field);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.field input:focus,
+.input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 4px var(--blue-tint);
+  background: var(--field-hover);
+}
+::placeholder { color: var(--text-3); }
+
+/* 瀏覽器自動填入時，不要跳出淺色底 */
+input:-webkit-autofill {
+  -webkit-text-fill-color: var(--text);
+  caret-color: var(--text);
+  box-shadow: 0 0 0 1000px #262938 inset;
+}
+
+/* === 狀態訊息 === */
+.notice {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 0.92rem;
+}
+.notice.ok {
+  background: var(--green-tint);
+  color: var(--green-text);
+  border: 1px solid rgba(48, 209, 88, 0.35);
+}
+.notice.err {
+  background: var(--red-tint);
+  color: var(--red);
+  border: 1px solid rgba(255, 69, 58, 0.35);
+}
+
+/* ============================================================
+   紀錄表格（手機版會變成一張一張的卡片）
+   ============================================================ */
+.table-scroll { overflow-x: auto; }
+
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.log-table th {
+  text-align: left;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-3);
+  padding: 14px 20px 10px;
+  border-bottom: 1px solid var(--hairline);
+  white-space: nowrap;
+}
+.log-table td {
+  padding: 13px 20px;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.log-table td.mono { font-family: var(--font-mono); }
+.log-table tbody tr:last-child td { border-bottom: none; }
+.log-table tbody tr { transition: background 0.12s; }
+.log-table tbody tr:hover { background: rgba(255, 255, 255, 0.035); }
+.log-table tr.row-pass td:first-child { box-shadow: inset 2px 0 0 var(--green); }
+.log-table tr.row-deny td:first-child { box-shadow: inset 2px 0 0 var(--red-solid); }
+
+.empty-row {
+  text-align: center;
+  color: var(--text-3);
+  padding: 28px 16px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 12px;
+  border-radius: 980px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.tag.pass { background: var(--green-tint); color: var(--green-text); }
+.tag.deny { background: var(--red-tint); color: var(--red); }
+
+@media (min-width: 641px) {
+  .log-table { min-width: 560px; }
+}
+@media (max-width: 640px) {
+  .log-table.stack,
+  .log-table.stack tbody,
+  .log-table.stack tr,
+  .log-table.stack td { display: block; width: 100%; }
+  .log-table.stack thead { display: none; }
+  .log-table.stack tbody tr { padding: 14px 20px; border-bottom: 1px solid var(--hairline); }
+  .log-table.stack tbody tr:last-child { border-bottom: none; }
+  .log-table.stack tr.row-pass { box-shadow: inset 3px 0 0 var(--green); }
+  .log-table.stack tr.row-deny { box-shadow: inset 3px 0 0 var(--red-solid); }
+  .log-table.stack tr.row-pass td:first-child,
+  .log-table.stack tr.row-deny td:first-child { box-shadow: none; }
+  .log-table.stack td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 4px 0;
+    border: none;
+    text-align: right;
+    word-break: break-all;
+  }
+  .log-table.stack td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    color: var(--text-3);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-align: left;
+    word-break: normal;
+  }
+  .log-table.stack td.empty-row {
+    justify-content: center;
+    text-align: center;
+    padding: 28px 0;
+  }
+  .log-table.stack td.empty-row::before { display: none; }
+}
+
+/* === 卡片晶片（首頁感應動畫用） === */
+.chip {
+  width: 34px;
+  height: 26px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #e8d3a0, #c9a45c 60%, #9a7b3c);
+  position: relative;
+  flex-shrink: 0;
+}
+.chip::before {
+  content: '';
+  position: absolute;
+  inset: 4px 6px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 2px;
+}
+
+/* ============================================================
+   對話框（導覽列與個人頁共用）
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(8, 9, 14, 0.55);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.modal-box {
+  padding: 28px 32px;
+  text-align: center;
+  min-width: 280px;
+  max-width: 360px;
+  background: var(--glass-solid);
+}
+.modal-box p {
+  font-size: 1rem;
+  margin-bottom: 20px;
+  color: var(--text);
+}
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* ============================================================
+   登入／註冊共用版面
+   ============================================================ */
+.auth-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 24px 20px;
+}
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 36px 32px;
+}
+.auth-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  margin-bottom: 26px;
+}
+.auth-head .app-icon { margin-bottom: 12px; }
+.auth-head h2 { font-size: 1.6rem; }
+.auth-foot {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hairline);
+  text-align: center;
+}
+.auth-foot p {
+  color: var(--text-3);
+  font-size: 0.88rem;
+  margin-bottom: 12px;
+}
+
+/* ============================================================
+   捲軸
+   ============================================================ */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(235, 235, 245, 0.26);
+  border-radius: 980px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ============================================================
+   手機版
+   ============================================================ */
+@media (max-width: 720px) {
+  .page { padding: 28px 16px 8px; }
+  /* 底部有浮動分頁列時，頁尾要多留空間，才不會被擋住 */
+  body:has(.nav) footer { padding-bottom: calc(18px + 84px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 480px) {
+  .auth-card { padding: 30px 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .led.go { animation: none; }
+  .fade-in { animation: none; }
+  * { transition-duration: 0.01ms !important; }
+}
